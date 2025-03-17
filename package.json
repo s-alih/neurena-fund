@@ -14,11 +14,17 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google/generative-ai": "^0.2.1",
+    "@injectivelabs/sdk-ts": "^1.14.41",
+    "@injectivelabs/wallet-cosmos-strategy": "^1.14.41",
     "@injectivelabs/wallet-ts": "^1.14.41",
+    "chromadb": "^1.10.5",
     "cors": "^2.8.5",
+    "cron": "^4.1.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "firebase-admin": "^13.2.0"
+    "firebase-admin": "^13.2.0",
+    "ws": "^8.18.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

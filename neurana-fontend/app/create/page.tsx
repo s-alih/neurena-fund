@@ -19,7 +19,6 @@ export default function CreateAgent() {
     setIsLoading(true);
 
     try {
-      // Get wallet address from local storage or state management
       const walletAddress = localStorage.getItem("walletAddress");
 
       if (!walletAddress) {
@@ -27,25 +26,26 @@ export default function CreateAgent() {
         return;
       }
 
-      const response = await fetch("/api/agents", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          ownerId: walletAddress,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/agents`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            ownerId: walletAddress,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to create agent");
       }
 
-      const agent = await response.json();
-      toast.success("Agent created successfully");
-
-      // Redirect to agent page
+      await response.json();
+      toast.success("Agent created successfully!");
       router.push("/agent");
     } catch (error: any) {
       toast.error(error.message || "Failed to create agent");

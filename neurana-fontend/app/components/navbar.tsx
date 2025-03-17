@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { Brain, Trophy, Wallet, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { WalletConnect } from "./wallet-connect";
 
 // This would come from your auth/state management
 const hasAgent = true; // Toggle this to test different states
@@ -49,10 +48,6 @@ export function Navbar() {
               </Link>
             ))}
           </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <WalletConnect />
         </div>
       </div>
     </nav>

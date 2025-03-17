@@ -14,8 +14,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
   const [stats, setStats] = useState({
     aum: 0,
     agents: 0,
@@ -34,6 +36,15 @@ export default function Home() {
 
     return () => clearInterval(interval);
   }, [stats]);
+
+  const handleLaunchApp = () => {
+    const walletAddress = localStorage.getItem("walletAddress");
+    if (!walletAddress) {
+      router.push("/connect");
+    } else {
+      router.push("/agent");
+    }
+  };
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -81,11 +92,9 @@ export default function Home() {
             <Button
               size="lg"
               className="bg-primary hover:bg-primary/90"
-              asChild
+              onClick={handleLaunchApp}
             >
-              <Link href="/agent">
-                Launch app <ArrowRight className="ml-2" />
-              </Link>
+              Launch app <ArrowRight className="ml-2" />
             </Button>
             <Button size="lg" variant="outline">
               View Performance
