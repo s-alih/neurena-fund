@@ -1,0 +1,13 @@
+###
+POST http://localhost:3008/api/users
+Content-Type: application/json
+
+{
+  "userId": "0x18241781b17b878cFC16B109035904C8E5073e73"
+}
+
+###
+GET http://localhost:3008/api/users/0x18241781b17b878cFC16B109035904C8E5073e73
+
+
+

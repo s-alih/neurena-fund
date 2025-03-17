@@ -1,12 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Brain, Send, ChartBar, MessageSquare, Settings, TrendingUp } from "lucide-react";
+import {
+  Brain,
+  Send,
+  ChartBar,
+  MessageSquare,
+  Settings,
+  TrendingUp,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 interface Message {
   role: "user" | "assistant";
@@ -14,15 +23,65 @@ interface Message {
   timestamp: Date;
 }
 
+interface Agent {
+  agentId: string;
+  name: string;
+  performanceMetrics: {
+    sharpeRatio: number;
+    totalTrades: number;
+    winRate: number;
+    roi: number;
+  };
+  status: string;
+}
+
 export default function AgentDashboard() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: "Hello! I'm your AI trading agent. How would you like to train me today?",
-      timestamp: new Date(),
-    },
-  ]);
+  const router = useRouter();
+  const [agent, setAgent] = useState<Agent | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+
+  useEffect(() => {
+    const checkWalletAndFetchAgent = async () => {
+      const walletAddress = localStorage.getItem("walletAddress");
+
+      if (!walletAddress) {
+        toast.error("Please connect your wallet first");
+        router.push("/");
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/agents/owner/${walletAddress}`);
+        if (response.status === 404) {
+          // No agent found, redirect to create page
+          router.push("/create");
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch agent");
+        }
+
+        const agentData = await response.json();
+        setAgent(agentData);
+        setMessages([
+          {
+            role: "assistant",
+            content: `Hello! I'm ${agentData.name}, your AI trading agent. How would you like to train me today?`,
+            timestamp: new Date(),
+          },
+        ]);
+      } catch (error: any) {
+        toast.error(error.message || "Failed to fetch agent data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkWalletAndFetchAgent();
+  }, []);
 
   const sendMessage = () => {
     if (!input.trim()) return;
@@ -36,12 +95,23 @@ export default function AgentDashboard() {
       },
       {
         role: "assistant",
-        content: "I understand your trading strategy. I'll adapt my parameters accordingly.",
+        content:
+          "I understand your trading strategy. I'll adapt my parameters accordingly.",
         timestamp: new Date(),
       },
     ]);
     setInput("");
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!agent) return null;
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -53,8 +123,10 @@ export default function AgentDashboard() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold mb-4">Your AI Agent</h1>
-              <p className="text-muted-foreground">Train and monitor your AI trading agent</p>
+              <h1 className="text-4xl font-bold mb-4">{agent.name}</h1>
+              <p className="text-muted-foreground">
+                Train and monitor your AI trading agent
+              </p>
             </div>
             <Button variant="outline" className="gap-2">
               <Settings className="w-4 h-4" />
@@ -76,7 +148,7 @@ export default function AgentDashboard() {
                   Performance
                 </TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="chat">
                 <Card className="p-6 bg-black/30 border-primary/20">
                   <div className="h-[500px] flex flex-col">
@@ -85,7 +157,9 @@ export default function AgentDashboard() {
                         <div
                           key={index}
                           className={`flex ${
-                            message.role === "user" ? "justify-end" : "justify-start"
+                            message.role === "user"
+                              ? "justify-end"
+                              : "justify-start"
                           }`}
                         >
                           <div
@@ -123,16 +197,24 @@ export default function AgentDashboard() {
                   <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-4 bg-black/20 rounded-lg">
-                        <p className="text-sm text-muted-foreground">Current ROI</p>
-                        <p className="text-2xl font-bold text-green-500">+28.5%</p>
+                        <p className="text-sm text-muted-foreground">
+                          Current ROI
+                        </p>
+                        <p className="text-2xl font-bold text-green-500">
+                          +28.5%
+                        </p>
                       </div>
                       <div className="p-4 bg-black/20 rounded-lg">
-                        <p className="text-sm text-muted-foreground">Win Rate</p>
+                        <p className="text-sm text-muted-foreground">
+                          Win Rate
+                        </p>
                         <p className="text-2xl font-bold">72%</p>
                       </div>
                     </div>
                     <div className="h-[300px] flex items-center justify-center border border-primary/20 rounded-lg">
-                      <p className="text-muted-foreground">Performance Chart Coming Soon</p>
+                      <p className="text-muted-foreground">
+                        Performance Chart Coming Soon
+                      </p>
                     </div>
                   </div>
                 </Card>
@@ -153,7 +235,9 @@ export default function AgentDashboard() {
               <div className="flex items-center gap-4">
                 <Brain className="w-6 h-6 text-primary" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Training Progress</p>
+                  <p className="text-sm text-muted-foreground">
+                    Training Progress
+                  </p>
                   <p className="text-2xl font-bold">Level 3</p>
                 </div>
               </div>

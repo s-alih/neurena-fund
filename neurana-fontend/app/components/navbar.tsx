@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Brain, Trophy, Wallet, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { WalletConnect } from "./wallet-connect";
 
 // This would come from your auth/state management
 const hasAgent = true; // Toggle this to test different states
@@ -50,23 +51,9 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* <div>
-          {hasAgent ? (
-            <Link href="/agent">
-              <Button variant="outline" className="gap-2">
-                <Brain className="w-4 h-4" />
-                My Agent
-              </Button>
-            </Link>
-          ) : (
-            <Link href="/create">
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" />
-                Create Agent
-              </Button>
-            </Link>
-          )}
-        </div> */}
+        <div className="flex items-center gap-4">
+          <WalletConnect />
+        </div>
       </div>
     </nav>
   );
