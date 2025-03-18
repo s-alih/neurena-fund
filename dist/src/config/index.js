@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.tournamentsCollection = exports.tradeSimulationsCollection = exports.liveTradesCollection = exports.platformFeesCollection = exports.agentsCollection = exports.vaultsCollection = exports.investmentsCollection = exports.tradesCollection = exports.usersCollection = void 0;
+const firebase_1 = require("./firebase");
+exports.usersCollection = firebase_1.db.collection("users");
+exports.tradesCollection = firebase_1.db.collection("trades");
+exports.investmentsCollection = firebase_1.db.collection("investments");
+exports.vaultsCollection = firebase_1.db.collection("vaults");
+exports.agentsCollection = firebase_1.db.collection("agents");
+exports.platformFeesCollection = firebase_1.db.collection("platform_fees");
+exports.liveTradesCollection = firebase_1.db.collection("live_trades");
+exports.tradeSimulationsCollection = firebase_1.db.collection("trade_simulations");
+exports.tournamentsCollection = firebase_1.db.collection("tournaments");

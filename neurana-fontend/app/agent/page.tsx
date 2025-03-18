@@ -1,70 +1,64 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import {
-  Brain,
-  Send,
-  ChartBar,
-  MessageSquare,
-  Settings,
-  TrendingUp,
-  BookOpen,
-  Target,
-  Zap,
-  AlertCircle,
-  HelpCircle,
-  Coins,
-  LineChart,
-  Timer,
-  Workflow,
-  Bot,
-  GitBranch,
-  PlayCircle,
-  PauseCircle,
-  History,
-  RefreshCw,
-} from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import {
+  Brain,
+  BarChart2,
+  Bot,
+  Zap,
+  ArrowRight,
+  LineChart,
+  Settings,
+  MessageSquare,
+  PlayCircle,
+  RefreshCw,
+  TrendingUp,
+  BookOpen,
+  Target,
+  Send,
+  GitBranch,
+  History,
+  Workflow,
+  PauseCircle,
+} from "lucide-react";
+
+interface Message {
+  role: string;
+  content: string;
+  timestamp: Date;
+}
+
+interface Agent {
+  agentId: string;
+  name: string;
+  owner: string;
+}
+
+interface Trade {
+  id: string;
+  timestamp: Date;
+  type: string;
+  amount: number;
+  price: number;
+  executionStatus: string;
+}
 
 interface TrainingSession {
   id: string;
-  status: "active" | "paused" | "completed";
+  status: string;
   startTime: Date;
   metrics: {
     accuracy: number;
     profitLoss: number;
     tradesExecuted: number;
   };
-}
-
-interface Message {
-  role: "user" | "assistant" | "system";
-  content: string;
-  timestamp: Date;
-  metadata?: {
-    tradeId?: string;
-    profitLoss?: number;
-    confidence?: number;
-    actionType?: "entry" | "exit" | "analysis" | "alert";
-  };
-}
-
-interface Trade {
-  id: string;
-  executionId: string;
-  agentId: string;
-  pair: string;
-  tradeType: "Buy" | "Sell";
-  amount: number;
-  price: number;
-  executionStatus: "Pending" | "Completed" | "Failed";
-  timestamp: Date;
 }
 
 const TRAINING_TOPICS = [
@@ -75,7 +69,7 @@ const TRAINING_TOPICS = [
       "Use dynamic position sizing based on volatility",
       "Implement trailing stops for trending markets",
     ],
-    icon: AlertCircle,
+    icon: Brain,
     level: "Beginner",
   },
   {
@@ -85,7 +79,7 @@ const TRAINING_TOPICS = [
       "Monitor volume patterns in trending markets",
       "Identify key support and resistance levels",
     ],
-    icon: ChartBar,
+    icon: BarChart2,
     level: "Intermediate",
   },
   {
@@ -108,59 +102,7 @@ const TRAINING_TOPICS = [
     icon: Zap,
     level: "Expert",
   },
-  {
-    title: "Market Conditions",
-    examples: [
-      "Train behavior during high market volatility",
-      "Adapt strategy for sideways market conditions",
-      "Handle market crashes and black swan events",
-    ],
-    icon: LineChart,
-    level: "Advanced",
-  },
-  {
-    title: "Portfolio Management",
-    examples: [
-      "Balance risk across multiple trading pairs",
-      "Implement dynamic asset allocation",
-      "Manage correlation between positions",
-    ],
-    icon: Coins,
-    level: "Expert",
-  },
-  {
-    title: "Automation Rules",
-    examples: [
-      "Define conditions for automated position entry",
-      "Set up chain of trading actions",
-      "Create emergency stop conditions",
-    ],
-    icon: Bot,
-    level: "Advanced",
-  },
-  {
-    title: "Time Management",
-    examples: [
-      "Schedule trading hours for specific markets",
-      "Set up market session preferences",
-      "Define weekend trading behavior",
-    ],
-    icon: Timer,
-    level: "Intermediate",
-  },
 ];
-
-interface Agent {
-  agentId: string;
-  name: string;
-  performanceMetrics: {
-    sharpeRatio: number;
-    totalTrades: number;
-    winRate: number;
-    roi: number;
-  };
-  status: string;
-}
 
 export default function AgentDashboard() {
   const router = useRouter();
@@ -179,15 +121,26 @@ export default function AgentDashboard() {
   const [isLoadingTrades, setIsLoadingTrades] = useState(false);
 
   useEffect(() => {
-    const checkWalletAndFetchAgent = async () => {
-      const walletAddress = localStorage.getItem("walletAddress");
-      console.log(walletAddress);
+    let isMounted = true;
 
+    const checkWalletAndFetchAgent = async () => {
       try {
+        const walletAddress = localStorage.getItem("walletAddress");
+        console.log("Wallet Address:", walletAddress);
+
+        if (!walletAddress) {
+          console.log("No wallet address found");
+          router.push("/connect");
+          return;
+        }
+
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/agents/owner/${walletAddress}`
         );
+        console.log("Response Status:", response.status);
+
         if (response.status === 404) {
+          console.log("Agent not found, redirecting to create");
           router.push("/create");
           return;
         }
@@ -197,40 +150,81 @@ export default function AgentDashboard() {
         }
 
         const agentData = await response.json();
-        setAgent(agentData);
+        console.log("Agent Data:", agentData);
 
-        // Fetch chat history
-        const chatResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/agents/${agentData.agentId}/chat`
-        );
-        if (chatResponse.ok) {
-          const chatHistory = await chatResponse.json();
-          setMessages(chatHistory);
+        if (isMounted) {
+          setAgent(agentData);
+          console.log("Agent State Set");
+
+          // Fetch chat history
+          try {
+            console.log("Fetching chat history for agent:", agentData.agentId);
+            const chatResponse = await fetch(
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/agents/${agentData.agentId}/chat`,
+              {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            console.log("Chat history response status:", chatResponse.status);
+
+            if (!chatResponse.ok) {
+              const errorText = await chatResponse.text();
+              console.error("Failed to fetch chat history:", errorText);
+              throw new Error(`Failed to fetch chat history: ${errorText}`);
+            }
+
+            const chatHistory = await chatResponse.json();
+            console.log("Received chat history:", chatHistory);
+
+            if (Array.isArray(chatHistory)) {
+              setMessages(
+                chatHistory.map((msg) => ({
+                  ...msg,
+                  timestamp: new Date(msg.timestamp),
+                }))
+              );
+              console.log("Chat History Set");
+            } else {
+              console.error("Invalid chat history format:", chatHistory);
+              toast.error("Invalid chat history format received");
+            }
+          } catch (chatError) {
+            console.error("Error fetching chat history:", chatError);
+            toast.error("Failed to load chat history");
+          }
         }
       } catch (error: any) {
+        console.error("Error:", error);
         toast.error(error.message || "Failed to fetch agent data");
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          console.log("Setting isLoading to false");
+          setIsLoading(false);
+        }
       }
     };
 
     checkWalletAndFetchAgent();
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   useEffect(() => {
     const fetchTrades = async () => {
       if (!agent) return;
-
       setIsLoadingTrades(true);
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/trades/agent/${agent.agentId}`
         );
-
         if (!response.ok) {
           throw new Error("Failed to fetch trades");
         }
-
         const tradesData = await response.json();
         setTrades(
           tradesData.map((trade: any) => ({
@@ -248,90 +242,13 @@ export default function AgentDashboard() {
     fetchTrades();
     // Set up an interval to fetch trades every 30 seconds
     const interval = setInterval(fetchTrades, 30000);
-
     return () => clearInterval(interval);
   }, [agent]);
-
-  const sendMessage = async () => {
-    if (!input.trim() || !agent) return;
-
-    const userMessage = {
-      role: "user" as const,
-      content: input,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsTyping(true);
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/agents/${agent.agentId}/chat`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ message: input }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to send message");
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("No response stream available");
-      }
-
-      let aiResponse = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const text = new TextDecoder().decode(value);
-        const lines = text.split("\n");
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const content = line.slice(6);
-            aiResponse += content;
-
-            setMessages((prev) => {
-              const newMessages = [...prev];
-              const lastMessage = newMessages[newMessages.length - 1];
-
-              if (lastMessage?.role === "assistant") {
-                lastMessage.content = aiResponse;
-                return newMessages;
-              } else {
-                return [
-                  ...newMessages,
-                  {
-                    role: "assistant" as const,
-                    content: aiResponse,
-                    timestamp: new Date(),
-                  },
-                ];
-              }
-            });
-          }
-        }
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to send message");
-    } finally {
-      setIsTyping(false);
-    }
-  };
 
   const handleExampleClick = (example: string) => {
     setInput(example);
   };
 
-  // Function to start a new training session
   const startTrainingSession = () => {
     setActiveSession({
       id: Date.now().toString(),
@@ -345,12 +262,145 @@ export default function AgentDashboard() {
     });
   };
 
-  // Function to toggle simulation mode
   const toggleSimulation = () => {
     setShowSimulation(!showSimulation);
   };
 
+  const sendMessage = async () => {
+    if (!input.trim() || !agent) {
+      console.log("No input or agent:", { input, agent });
+      return;
+    }
+
+    const userMessage = {
+      role: "user",
+      content: input,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsTyping(true);
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    try {
+      console.log(
+        "Sending message to:",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/agents/${agent.agentId}/chat`
+      );
+      console.log("Message payload:", { message: input });
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/agents/${agent.agentId}/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: input }),
+          signal: signal,
+        }
+      );
+
+      console.log("Chat response status:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Chat error response:", errorText);
+        throw new Error(`Failed to send message: ${errorText}`);
+      }
+
+      if (!response.body) {
+        throw new Error("No response body available");
+      }
+
+      const reader = response.body.getReader();
+      let aiResponse = "";
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            console.log("Stream complete");
+            break;
+          }
+
+          // Check if the connection is still alive
+          if (signal.aborted) {
+            throw new Error("Connection aborted");
+          }
+
+          const text = new TextDecoder().decode(value);
+          console.log("Received chunk:", text);
+
+          const lines = text.split("\n");
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const content = line.slice(6);
+              console.log("Parsed content:", content);
+              aiResponse += content;
+
+              // Update messages atomically to prevent race conditions
+              setMessages((prev) => {
+                const newMessages = [...prev];
+                const lastMessage = newMessages[newMessages.length - 1];
+
+                if (lastMessage?.role === "assistant") {
+                  return [
+                    ...newMessages.slice(0, -1),
+                    {
+                      ...lastMessage,
+                      content: aiResponse,
+                      timestamp: new Date(),
+                    },
+                  ];
+                } else {
+                  return [
+                    ...newMessages,
+                    {
+                      role: "assistant",
+                      content: aiResponse,
+                      timestamp: new Date(),
+                    },
+                  ];
+                }
+              });
+            }
+          }
+        }
+      } catch (streamError) {
+        console.error("Stream error:", streamError);
+        reader.cancel();
+        throw streamError;
+      }
+    } catch (error: any) {
+      console.error("Chat error:", error);
+      if (error.name === "AbortError") {
+        toast.error("Connection timed out. Please try again.");
+      } else {
+        toast.error(error.message || "Failed to send message");
+      }
+
+      // Add error message to chat
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "system",
+          content:
+            "Sorry, there was an error processing your message. Please try again.",
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+      controller.abort(); // Clean up the controller
+    }
+  };
+
   if (isLoading) {
+    console.log("Rendering loading state");
     return (
       <div className="min-h-screen bg-background p-6 flex items-center justify-center">
         Loading...
@@ -358,8 +408,12 @@ export default function AgentDashboard() {
     );
   }
 
-  if (!agent) return null;
+  if (!agent) {
+    console.log("No agent found, rendering null");
+    return null;
+  }
 
+  console.log("Rendering main dashboard");
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="container max-w-6xl">
@@ -395,7 +449,7 @@ export default function AgentDashboard() {
                   Latest Trades
                 </TabsTrigger>
                 <TabsTrigger value="performance" className="gap-2">
-                  <ChartBar className="w-4 h-4" />
+                  <BarChart2 className="w-4 h-4" />
                   Performance
                 </TabsTrigger>
               </TabsList>
@@ -433,6 +487,7 @@ export default function AgentDashboard() {
                           </p>
                         </div>
                       )}
+
                       {messages.map((message, index) => (
                         <div
                           key={index}
@@ -456,131 +511,107 @@ export default function AgentDashboard() {
                           </div>
                         </div>
                       ))}
+
                       {isTyping && (
                         <div className="flex justify-start">
                           <div className="max-w-[80%] p-4 rounded-lg bg-muted">
                             <div className="flex space-x-2">
                               <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
-                              <div className="w-2 h-2 bg-primary rounded-full animate-bounce delay-100" />
-                              <div className="w-2 h-2 bg-primary rounded-full animate-bounce delay-200" />
+                              <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
+                              <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.4s]" />
                             </div>
                           </div>
                         </div>
                       )}
                     </div>
-                    <div className="space-y-4">
-                      {selectedTopic && (
-                        <div className="bg-muted/50 p-4 rounded-lg">
-                          <div className="flex justify-between items-center mb-2">
-                            <h4 className="font-semibold">
-                              {selectedTopic} Examples:
-                            </h4>
-                            <span className="text-xs px-2 py-1 bg-primary/20 rounded">
-                              {
-                                TRAINING_TOPICS.find(
-                                  (t) => t.title === selectedTopic
-                                )?.level
-                              }
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {TRAINING_TOPICS.find(
-                              (t) => t.title === selectedTopic
-                            )?.examples.map((example, index) => (
-                              <Button
-                                key={index}
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleExampleClick(example)}
-                                className="text-xs"
-                              >
-                                {example}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
 
-                      <div className="flex gap-4">
-                        <Input
-                          placeholder="Train your AI agent..."
-                          value={input}
-                          onChange={(e) => setInput(e.target.value)}
-                          onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                        />
-                        <Button onClick={sendMessage} disabled={isTyping}>
+                    <div className="flex gap-4">
+                      <Input
+                        placeholder="Train your AI agent..."
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+                        disabled={isTyping}
+                      />
+                      <Button
+                        onClick={sendMessage}
+                        disabled={isTyping || !input.trim()}
+                      >
+                        {isTyping ? (
+                          <div className="animate-spin">
+                            <RefreshCw className="w-4 h-4" />
+                          </div>
+                        ) : (
                           <Send className="w-4 h-4" />
-                        </Button>
-                      </div>
+                        )}
+                      </Button>
+                    </div>
 
-                      <div className="flex justify-between items-center gap-2 mb-4">
-                        <div className="flex gap-2">
-                          {!activeSession ? (
-                            <Button
-                              size="sm"
-                              onClick={startTrainingSession}
-                              className="gap-2"
-                            >
-                              <PlayCircle className="w-4 h-4" />
-                              Start Training
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setActiveSession(null)}
-                              className="gap-2"
-                            >
-                              <PauseCircle className="w-4 h-4" />
-                              End Session
-                            </Button>
-                          )}
+                    <div className="flex justify-between items-center gap-2 mb-4">
+                      <div className="flex gap-2">
+                        {!activeSession ? (
+                          <Button
+                            size="sm"
+                            onClick={startTrainingSession}
+                            className="gap-2"
+                          >
+                            <PlayCircle className="w-4 h-4" />
+                            Start Training
+                          </Button>
+                        ) : (
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={toggleSimulation}
+                            onClick={() => setActiveSession(null)}
                             className="gap-2"
                           >
-                            <GitBranch className="w-4 h-4" />
-                            Toggle Simulation
+                            <PauseCircle className="w-4 h-4" />
+                            End Session
                           </Button>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="ghost" className="gap-2">
-                            <History className="w-4 h-4" />
-                            History
-                          </Button>
-                          <Button size="sm" variant="ghost" className="gap-2">
-                            <Workflow className="w-4 h-4" />
-                            Workflow
-                          </Button>
-                        </div>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={toggleSimulation}
+                          className="gap-2"
+                        >
+                          <GitBranch className="w-4 h-4" />
+                          Toggle Simulation
+                        </Button>
                       </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" className="gap-2">
+                          <History className="w-4 h-4" />
+                          History
+                        </Button>
+                        <Button size="sm" variant="ghost" className="gap-2">
+                          <Workflow className="w-4 h-4" />
+                          Workflow
+                        </Button>
+                      </div>
+                    </div>
 
-                      <div className="flex gap-2 overflow-x-auto pb-2">
-                        {TRAINING_TOPICS.map((topic) => (
-                          <Button
-                            key={topic.title}
-                            variant={
-                              selectedTopic === topic.title
-                                ? "default"
-                                : "outline"
-                            }
-                            size="sm"
-                            onClick={() =>
-                              setSelectedTopic(
-                                topic.title === selectedTopic
-                                  ? null
-                                  : topic.title
-                              )
-                            }
-                            className="whitespace-nowrap"
-                          >
-                            <topic.icon className="w-4 h-4 mr-2" />
-                            {topic.title}
-                          </Button>
-                        ))}
-                      </div>
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                      {TRAINING_TOPICS.map((topic) => (
+                        <Button
+                          key={topic.title}
+                          variant={
+                            selectedTopic === topic.title
+                              ? "default"
+                              : "outline"
+                          }
+                          size="sm"
+                          onClick={() =>
+                            setSelectedTopic(
+                              topic.title === selectedTopic ? null : topic.title
+                            )
+                          }
+                          className="whitespace-nowrap"
+                        >
+                          <topic.icon className="w-4 h-4 mr-2" />
+                          {topic.title}
+                        </Button>
+                      ))}
                     </div>
                   </div>
                 </Card>
@@ -626,65 +657,6 @@ export default function AgentDashboard() {
                         <RefreshCw className="w-4 h-4 mr-2" />
                         Refresh
                       </Button>
-                    </div>
-
-                    <div className="h-[400px] overflow-y-auto">
-                      {isLoadingTrades ? (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                        </div>
-                      ) : trades.length === 0 ? (
-                        <div className="text-center text-muted-foreground h-full flex flex-col items-center justify-center">
-                          <Bot className="w-12 h-12 mb-4 opacity-50" />
-                          <p>No trades executed yet</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {trades.map((trade) => (
-                            <div
-                              key={trade.id}
-                              className="p-4 bg-black/20 rounded-lg flex items-center justify-between"
-                            >
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <span
-                                    className={`text-sm font-semibold ${
-                                      trade.tradeType === "Buy"
-                                        ? "text-green-500"
-                                        : "text-red-500"
-                                    }`}
-                                  >
-                                    {trade.tradeType}
-                                  </span>
-                                  <span className="text-sm text-muted-foreground">
-                                    {trade.pair}
-                                  </span>
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {new Date(trade.timestamp).toLocaleString()}
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-sm font-semibold">
-                                  {trade.amount.toFixed(4)} @ $
-                                  {trade.price.toFixed(2)}
-                                </div>
-                                <div
-                                  className={`text-xs ${
-                                    trade.executionStatus === "Completed"
-                                      ? "text-green-500"
-                                      : trade.executionStatus === "Failed"
-                                      ? "text-red-500"
-                                      : "text-yellow-500"
-                                  }`}
-                                >
-                                  {trade.executionStatus}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
