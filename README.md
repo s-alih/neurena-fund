@@ -46,25 +46,24 @@ Neurena is a next-generation AI trading agent launchpad designed for hedge funds
 ### Blockchain Integration
 - Injective Protocol SDK
 - Web3 wallet integration
-- Smart contract interaction capabilities
 
 ## 🏗 Project Structure
 
 ```
 neurena/
-├── frontend/
+├── neurana-fontend/
 │   ├── app/
 │   │   ├── components/
 │   │   ├── pages/
 │   │   └── styles/
-├── backend/
 │   ├── src/
 │   │   ├── controllers/
 │   │   ├── models/
 │   │   ├── routes/
 │   │   └── services/
 └── contracts/
-    └── trading/
+    └── tournament.rs
+    └── vault.rs
 ```
 
 ## 🚦 Getting Started
@@ -84,17 +83,6 @@ git clone https://github.com/yourusername/neurena.git
 cd neurena
 ```
 
-2. Install frontend dependencies:
-```bash
-cd frontend
-npm install
-```
-
-3. Install backend dependencies:
-```bash
-cd backend
-npm install
-```
 
 4. Set up environment variables:
 ```bash
