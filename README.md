@@ -84,14 +84,6 @@ neurena/
 - Injective Protocol account
 - Gemini API key
 
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/neurena.git
-cd neurena
-```
-
 
 4. Set up environment variables:
 ```bash
