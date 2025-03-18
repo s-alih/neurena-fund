@@ -137,41 +137,72 @@ npm run dev
 
 ## 🔗 Smart Contracts
 
-Neurena's smart contracts are written in Rust and deployed on the Injective Protocol blockchain. They handle critical aspects of the platform's functionality:
+Neurena's smart contracts are written in Rust and deployed on the Injective Protocol blockchain. The contracts are built using the CosmWasm framework and handle critical aspects of the platform's functionality:
 
-### Vault Contract
-The vault contract manages trading agent funds and permissions:
-- Secure fund management for each trading agent
-- Role-based access control for fund operations
-- Automated trade execution permissions
-- Risk management parameters and limits
-- Real-time balance tracking and reporting
+### Vault Contract (`vault.rs`)
+The vault contract manages trading agent funds and permissions with the following key components:
 
-### Tournament Contract
-The tournament contract handles agent competitions and rewards:
-- Tournament creation and management
-- Entry fee handling and prize pool distribution
-- Performance tracking during competitions
-- Automated reward distribution
-- Fair play enforcement mechanisms
+**State Storage:**
+- `deposits`: Map of investor addresses to their deposit amounts
+- `current_agent`: Storage for the currently assigned AI agent
+
+**Key Functions:**
+- `instantiate`: Initializes the vault contract
+- `execute_deposit`: Handles investor fund deposits
+- `execute_assign_winner`: Assigns vault access to winning AI agents
+- `execute_withdraw`: Processes investor withdrawals
+
+### Tournament Contract (`tournament.rs`)
+The tournament contract manages agent competitions with built-in simulation capabilities:
+
+**Configuration:**
+- Entry Fee: 1 INJ token
+- Initial Balance: 100,000 simulated funds per agent
+
+**State Storage:**
+- `agents`: Map of AI Agent IDs to their simulated balances
+- `winner`: Storage for the winning agent's ID
+
+**Key Functions:**
+- `instantiate`: Sets up a new tournament
+- `execute_register_agent`: Registers AI agents for competition
+- `execute_update_balance`: Updates agent balances during simulation
+- `execute_finalize_tournament`: Determines the winner based on performance
 
 ### Contract Architecture
 ```
 contracts/
-├── vault.rs        # Agent fund management
-└── tournament.rs   # Competition handling
+├── Cargo.toml          # Rust dependencies and contract metadata
+├── src/
+│   ├── vault.rs        # Agent fund management
+│   └── tournament.rs   # Competition handling
+└── artifacts/          # Compiled WASM binaries
 ```
 
 ### Contract Deployment
 To deploy the contracts:
-1. Install Rust and Cargo
-2. Set up the Injective Protocol development environment
-3. Build the contracts:
+
+1. Install Rust and add WASM target:
 ```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup target add wasm32-unknown-unknown
+```
+
+2. Build the contracts:
+```bash
+cd contracts
 cargo build --release --target wasm32-unknown-unknown
 ```
-4. Deploy using the Injective CLI:
+
+3. Deploy using the Injective CLI:
 ```bash
 injectived tx wasm store artifacts/vault.wasm --from your-account --chain-id testnet
 injectived tx wasm store artifacts/tournament.wasm --from your-account --chain-id testnet
 ```
+
+### Security Features
+- Secure fund management with deposit tracking
+- Role-based access control for operations
+- Automated winner selection and reward distribution
+- Protected withdrawal mechanisms
+- Balance tracking and verification

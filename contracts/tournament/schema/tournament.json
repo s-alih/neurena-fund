@@ -1,0 +1,122 @@
+{
+  "contract_name": "tournament",
+  "contract_version": "0.1.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "InstantiateMsg",
+    "type": "object"
+  },
+  "execute": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ExecuteMsg",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "create_tournament"
+        ],
+        "properties": {
+          "create_tournament": {
+            "type": "object",
+            "required": [
+              "entry_fee",
+              "max_players",
+              "name"
+            ],
+            "properties": {
+              "entry_fee": {
+                "type": "integer",
+                "format": "uint128",
+                "minimum": 0.0
+              },
+              "max_players": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "join_tournament"
+        ],
+        "properties": {
+          "join_tournament": {
+            "type": "object",
+            "required": [
+              "tournament_id"
+            ],
+            "properties": {
+              "tournament_id": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "start_tournament"
+        ],
+        "properties": {
+          "start_tournament": {
+            "type": "object",
+            "required": [
+              "tournament_id"
+            ],
+            "properties": {
+              "tournament_id": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "end_tournament"
+        ],
+        "properties": {
+          "end_tournament": {
+            "type": "object",
+            "required": [
+              "tournament_id",
+              "winner"
+            ],
+            "properties": {
+              "tournament_id": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "winner": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "query": null,
+  "migrate": null,
+  "sudo": null,
+  "responses": null
+}

@@ -1,0 +1,1 @@
+/Users/salihpoovathingalhussainar/Documents/neurena/contracts/tournament/target/wasm32-unknown-unknown/release/tournament.wasm: /Users/salihpoovathingalhussainar/Documents/neurena/contracts/tournament/src/lib.rs

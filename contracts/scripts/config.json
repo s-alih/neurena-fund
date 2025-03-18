@@ -1,0 +1,14 @@
+{
+    "testnet": {
+        "rpc": "https://testnet.sentry.tm.injective.network:443",
+        "chain_id": "injective-888",
+        "gas_price": "500000000",
+        "gas_adjustment": "1.3"
+    },
+    "mainnet": {
+        "rpc": "https://sentry.tm.injective.network:443",
+        "chain_id": "injective-1",
+        "gas_price": "500000000",
+        "gas_adjustment": "1.3"
+    }
+} 
