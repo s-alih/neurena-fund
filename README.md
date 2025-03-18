@@ -62,8 +62,17 @@ neurena/
 │   │   ├── routes/
 │   │   └── services/
 └── contracts/
-    └── tournament.rs
-    └── vault.rs
+    └── scripts/
+        └── deploy.sh
+        └── build.sh
+    └── src/
+        └── contracts/
+            └── vault.rs
+            └── tournament.rs
+    └── target/
+    └── artifacts/
+    └── tournament.wasm
+    └── vault
 ```
 
 ## 🚦 Getting Started
